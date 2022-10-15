@@ -66,11 +66,14 @@ void runMyFuture() {
 
 ```dart
 void runMyFuture() {
-  myTypedFuture().then((value) {
+  myTypedFuture()
+  .then((value) {
     // Run extra code here
   })
-  .catchError( (error) {
+  .catchError((error) {
     print(error);
+  }).whenComplete(() {
+    print("all finised");
   });
 }
 ```
@@ -123,4 +126,26 @@ Future runMultipleFutures() async {
   // We're done with all futures execution
   print('All the futures has completed');
 }
+```
+
+
+
+---------------------------------
+---------------------------------------
+------------------------------------
+------------------------------------
+FutureBuilder for flutter to show text conditionally
+```dart
+  FutureBuilder(
+    future: myTypedFuture(),
+    builder: (context, snapshot) {
+      if (snapshot.hasError) {
+        return Text("There was an Error");
+      } else if (snapshot.hasData) {
+        return Text("${snapshot.data}");
+      } else {
+        return Text("No Value Yet");
+      }
+    },
+  )
 ```
