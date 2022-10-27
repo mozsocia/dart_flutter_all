@@ -1,3 +1,5 @@
+folder structure --------  https://medium.com/flutter-community/scalable-folder-structure-for-flutter-applications-183746bdc320#:~:text=The%20different%20components%20in%20the,actual%20implementation%20of%20the%20repository
+
 ```dart
 class Counter extends ChangeNotifier {
   var _count = 0;
