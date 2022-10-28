@@ -1,5 +1,4 @@
-# dart_all
+# getx special
 
+![image](https://user-images.githubusercontent.com/12442613/198514228-0af2a2e8-b538-47aa-b94e-cadf79b94b9a.png)
 
-isolates, event_loop , Futures, Stream 
-https://www.youtube.com/watch?v=vl_AaCgudcY&list=PLjxrf2q8roU2HdJQDjJzOeO6J3FoFLWr2&index=14
