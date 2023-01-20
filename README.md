@@ -1,11 +1,7 @@
-# dart_all
+### json to object converting 
 
+https://suragch.medium.com/parsing-simple-json-in-flutter-83ee1809a6ab
 
-isolates, event_loop , Futures, Stream 
-https://www.youtube.com/watch?v=vl_AaCgudcY&list=PLjxrf2q8roU2HdJQDjJzOeO6J3FoFLWr2&index=14
+https://docs.flutter.dev/cookbook/networking/background-parsing
 
-
-
-
-### How to use flutter with visual studio code  install android sdk
-https://youtube.com/playlist?list=PLhiWkal4LoNLBiDLX_46ZDHC6PYpQZt5o
+https://docs.flutter.dev/development/data-and-backend/json
