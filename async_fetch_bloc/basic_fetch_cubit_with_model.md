@@ -92,18 +92,6 @@ class MyApp1 extends StatelessWidget {
   }
 }
 
-class MyApp2 extends StatelessWidget {
-  const MyApp2({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocProvider<TodoBloc>(
-      create: (context) => TodoBloc(),
-      child: TodoPage(),
-    );
-  }
-}
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
