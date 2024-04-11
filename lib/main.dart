@@ -62,7 +62,7 @@ class _TodoScreenState extends State<TodoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Firebase Todo App'),
+        title: Text('Mozdalif Todo App'),
       ),
       body: _selectedIndex ==
               0 // Display different content based on selected index
