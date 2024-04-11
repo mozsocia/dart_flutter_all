@@ -34,6 +34,15 @@ class _TodoScreenState extends State<TodoScreen> {
   final _todoController = TextEditingController();
   final _firestore = FirebaseFirestore.instance;
 
+  int _selectedIndex =
+      0; // Index to keep track of selected bottom navigation bar item
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
   void _addTodo() {
     if (_todoController.text.isNotEmpty) {
       _firestore.collection('todos').add({
@@ -55,7 +64,32 @@ class _TodoScreenState extends State<TodoScreen> {
       appBar: AppBar(
         title: Text('Firebase Todo App'),
       ),
-      body: Column(
+      body: _selectedIndex ==
+              0 // Display different content based on selected index
+          ? _buildTodayTodoList() // Method to build today's todo list
+          : _buildOldTodoList(), // Method to build old todo list
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.today),
+            label: 'Today Todo',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: 'Old Todo',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.blue,
+        onTap: _onItemTapped,
+      ),
+    );
+  }
+
+  Widget _buildTodayTodoList() {
+    return Padding(
+      padding: const EdgeInsets.all(10.0),
+      child: Column(
         children: [
           TextField(
             controller: _todoController,
@@ -69,7 +103,21 @@ class _TodoScreenState extends State<TodoScreen> {
           ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: _firestore.collection('todos').snapshots(),
+              stream: _firestore
+                  .collection('todos')
+                  .where('createdAt',
+                      isGreaterThanOrEqualTo: Timestamp.fromDate(DateTime(
+                          DateTime.now().year,
+                          DateTime.now().month,
+                          DateTime.now().day)))
+                  .where('createdAt',
+                      isLessThan: Timestamp.fromDate(DateTime(
+                              DateTime.now().year,
+                              DateTime.now().month,
+                              DateTime.now().day)
+                          .add(const Duration(days: 1))))
+                  .orderBy('createdAt', descending: true)
+                  .snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return Center(child: CircularProgressIndicator());
@@ -113,6 +161,99 @@ class _TodoScreenState extends State<TodoScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildOldTodoList() {
+    return Padding(
+      padding: const EdgeInsets.all(10.0),
+      child: StreamBuilder<QuerySnapshot>(
+        stream: _firestore
+            .collection('todos')
+            .where('createdAt',
+                isLessThan: Timestamp.fromDate(
+                    DateTime.now().subtract(Duration(days: 1))))
+            .orderBy('createdAt', descending: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          final todos = snapshot.data?.docs;
+
+          // Variables to track the previous date
+          DateTime? previousDate;
+          bool showBadge = false;
+
+          return ListView.builder(
+            itemCount: todos?.length,
+            itemBuilder: (context, index) {
+              final todo = todos?[index];
+
+              // Extract the createdAt timestamp from the todo document
+              final createdAt = todo?['createdAt'] as Timestamp;
+              final todoDate =
+                  DateTime.fromMillisecondsSinceEpoch(createdAt.seconds * 1000);
+
+              // Check if this todo belongs to a new date
+              if (previousDate == null || todoDate.day != previousDate?.day) {
+                // If a new date, update previousDate and set showBadge to true
+                previousDate = todoDate;
+                showBadge = true;
+              } else {
+                // If not a new date, set showBadge to false
+                showBadge = false;
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (showBadge) // Show the badge if it's a new date
+                    Container(
+                      padding: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                      margin: EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        '${todoDate.day}/${todoDate.month}/${todoDate.year}',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ListTile(
+                    title: Text(todo?['title']),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Checkbox(
+                          value: todo?['completed'],
+                          onChanged: (value) {
+                            _firestore
+                                .collection('todos')
+                                .doc(todo?.id)
+                                .update({
+                              'completed': value,
+                            });
+                          },
+                        ),
+                        SizedBox(
+                          width: 10,
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.delete),
+                          onPressed: () => _deleteTodo(todo!.id),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        },
       ),
     );
   }
