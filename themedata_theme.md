@@ -56,7 +56,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Theme Example',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primaryColor: Colors.blue,
         hintColor: Colors.purple,
         textTheme: TextTheme(
           displayLarge: TextStyle(
