@@ -54,8 +54,59 @@ class _TodoScreenState extends State<TodoScreen> {
     }
   }
 
-  void _deleteTodo(String id) {
-    _firestore.collection('todos').doc(id).delete();
+  void _deleteTodo(String id) async {
+    final todoDoc = await _firestore.collection('todos').doc(id).get();
+    final todoTitle = todoDoc.data()?['title'];
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Are you sure you want to delete $todoTitle?"),
+        action: SnackBarAction(
+          label: 'Delete',
+          onPressed: () {
+            _firestore.collection('todos').doc(id).delete();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('$todoTitle deleted successfully!'),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _addTodoDaily() {
+    if (_todoController.text.isNotEmpty) {
+      _firestore.collection('daily_target').add({
+        'title': _todoController.text,
+        'completed': false,
+        'createdAt': Timestamp.now(),
+      });
+      _todoController.clear();
+    }
+  }
+
+  void _deleteTodoDaily(String id) async {
+    final todoDoc = await _firestore.collection('daily_target').doc(id).get();
+    final todoTitle = todoDoc.data()?['title'];
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Are you sure you want to delete $todoTitle?"),
+        action: SnackBarAction(
+          label: 'Delete',
+          onPressed: () {
+            _firestore.collection('daily_target').doc(id).delete();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('$todoTitle deleted successfully!'),
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -64,10 +115,11 @@ class _TodoScreenState extends State<TodoScreen> {
       appBar: AppBar(
         title: Text('Mozdalif Todo App'),
       ),
-      body: _selectedIndex ==
-              0 // Display different content based on selected index
-          ? _buildTodayTodoList() // Method to build today's todo list
-          : _buildOldTodoList(), // Method to build old todo list
+      body: _selectedIndex == 0
+          ? _buildTodayTodoList()
+          : _selectedIndex == 1
+              ? _buildOldTodoList()
+              : _buildDailyTargetPage(), // Method to build old todo list
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -77,6 +129,10 @@ class _TodoScreenState extends State<TodoScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.history),
             label: 'Old Todo',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.assignment),
+            label: 'Daily Target', // New menu item
           ),
         ],
         currentIndex: _selectedIndex,
@@ -254,6 +310,74 @@ class _TodoScreenState extends State<TodoScreen> {
             },
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildDailyTargetPage() {
+    return Padding(
+      padding: const EdgeInsets.all(10.0),
+      child: Column(
+        children: [
+          TextField(
+            controller: _todoController,
+            decoration: InputDecoration(
+              hintText: 'Enter a new daily target',
+              suffixIcon: IconButton(
+                icon: Icon(Icons.add),
+                onPressed: _addTodoDaily,
+              ),
+            ),
+          ),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _firestore
+                  .collection('daily_target')
+                  .orderBy('createdAt', descending: true)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return Center(child: CircularProgressIndicator());
+                }
+
+                final todos = snapshot.data?.docs;
+
+                return ListView.builder(
+                  itemCount: todos?.length,
+                  itemBuilder: (context, index) {
+                    final todo = todos?[index];
+                    return ListTile(
+                      title: Text(todo?['title']),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Checkbox(
+                            value: todo?['completed'],
+                            onChanged: (value) {
+                              _firestore
+                                  .collection('daily_target')
+                                  .doc(todo?.id)
+                                  .update({
+                                'completed': value,
+                              });
+                            },
+                          ),
+                          SizedBox(
+                            width: 10,
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.delete),
+                            onPressed: () => _deleteTodoDaily(todo!.id),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
